@@ -1,0 +1,16 @@
+[{:migration/id :python-to-cljc
+  :migration/status :in-progress
+  :migration/canonical-format :edn
+  :migration/completed
+  #{:httpx-eliminated
+    :mst-projector-cljc
+    :mst-cljc
+    :llm-cljc
+    :errors-cljc
+    :metrics-cljc}
+  :migration/coexisting-python #{:metrics :package-init}
+  :migration/remaining
+  [{:component :mst-projector-subscriber
+    :owner-repository "etzhayyim/root"
+    :reason :python-atproto-firehose-and-cbor-dependencies}]
+  :migration/verification {:cljc-tests 17 :assertions 47}}]
