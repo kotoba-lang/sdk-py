@@ -1,0 +1,9 @@
+;; etzhayyim-sdk — bb config for the cljc port (httpx→babashka.http-client). cheshire +
+;; babashka.http-client are bb built-ins, so no :deps are needed. :paths puts the cljc
+;; modules on the classpath so `bb -e "(require 'etzhayyim-sdk.mst-projector)"` resolves when
+;; run from this dir. This file is scoped to this directory and does not affect the repo-root
+;; bb.edn. Tests: `bb test` (or `bb run_tests.clj`).
+{:paths ["src"]
+ :tasks
+ {test {:doc "Run the cljc test suites under bb"
+        :task (load-file "run_tests.clj")}}}
