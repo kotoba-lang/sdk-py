@@ -4,10 +4,28 @@
 ;; bb-native analogue of the python MockTransport handler. No real network calls.
 ;; Per ADR-2605215500 §5 M5 milestone.
 (ns etzhayyim-sdk.test-mst-projector
-  (:require [clojure.test :refer [deftest is]]
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
+            [clojure.string :as str]
             [cheshire.core :as json]
             [etzhayyim-sdk.errors :as err]
             [etzhayyim-sdk.mst-projector :as mp]))
+
+;; ─── Endpoint fixture ────────────────────────────────────────────────
+;;
+;; The endpoint has no default (see the note above `resolve-base-url`), so every test that
+;; performs a query has to name a host, exactly as a real caller now must. This fixture names
+;; one for the whole suite. Before the endpoint was made explicit these tests ran against the
+;; invented "http://simeon.local:8765" fallback without ever saying so — which is precisely
+;; how the defect stayed invisible.
+;;
+;; `real-base-url` captures the true implementation at load time, so the handful of tests
+;; below that assert the *unconfigured* behaviour can restore it inside the fixture.
+
+(def ^:private real-base-url mp/base-url)
+
+(def ^:private test-endpoint "https://projector.test")
+
+(use-fixtures :each (fn [run] (with-redefs [mp/base-url (constantly test-endpoint)] (run))))
 
 ;; ─── Transport stubs (≈ python _json_handler / _error_handler / _capturing_handler) ───
 
@@ -137,3 +155,88 @@
         (mp/query-by-collection "com.etzhayyim.test.record")))
     (is (= 1 (count @urls)))
     (is (clojure.string/starts-with? (first @urls) "http://my-projector.local:9999/"))))
+
+;; ─── Which host gets contacted when nothing was configured ───────────
+;;
+;; `base-url` used to fall back to a literal "http://simeon.local:8765". `.local` is the
+;; mDNS/Bonjour namespace (RFC 6762), so that name is claimable by any host on the same link,
+;; and `simeon` is a private murakumo fleet node that exists only on the operator's own
+;; network. Unlike llm.cljc this module sends no credential — `default-request` sets only
+;; content-type, and the transport signature has no header slot at all — so the exposure is
+;; narrower: query bodies (collection names, author DIDs) go to whoever answered, and the
+;; reply is parsed and trusted as record data. Still a host nobody chose.
+
+(defn- env-base-url [] #?(:clj (System/getenv "ETZHAYYIM_MST_PROJECTOR_URL") :cljs nil))
+
+(defn- attempt
+  "Run *f*, returning {:value v} or {:error e} — so a failure can report the leaked value."
+  [f]
+  (try {:value (f)} (catch #?(:clj Exception :cljs :default) e {:error e})))
+
+(deftest base-url-never-invents-an-mdns-host
+  (let [configured (some-> (env-base-url) str/trim not-empty)
+        outcome (with-redefs [mp/base-url real-base-url] (attempt mp/base-url))]
+    (if configured
+      (testing "an explicitly configured ETZHAYYIM_MST_PROJECTOR_URL is honoured"
+        (is (= (str/replace configured #"/+$" "") (:value outcome))))
+      (testing "with ETZHAYYIM_MST_PROJECTOR_URL unset, base-url refuses rather than guessing"
+        (is (contains? outcome :error)
+            (str "base-url must not resolve a host nobody chose; it returned "
+                 (pr-str (:value outcome))))
+        (when-let [e (:error outcome)]
+          (is (err/sdk-error? e ::err/mst-projector-error)
+              "the refusal should be a classifiable SDK mst-projector error"))))
+
+    (is (not (str/includes? (str (:value outcome)) ".local"))
+        "base-url must never return a .local (mDNS) host")))
+
+(deftest no-query-is-sent-to-an-unchosen-host
+  (when (str/blank? (str (env-base-url)))
+    (let [urls (atom [])]
+      (with-redefs [mp/base-url real-base-url]
+        (binding [mp/*request* (capturing-handler [{:status 200 :body {:records [] :cursor nil}}]
+                                                  {:urls urls})]
+          (attempt #(mp/query-by-collection "com.etzhayyim.test.record"))))
+      (testing "an unconfigured client sends nothing at all"
+        (is (empty? @urls)
+            (str "query-by-collection contacted a host the SDK chose for itself: "
+                 (pr-str @urls)))))))
+
+;; POSITIVE CONTROL — passes both before and after the fix, alongside the older
+;; test-base-url-env-var-override above. An explicitly chosen host is still reached, so a
+;; failure here points at URL building rather than at the default-host change.
+(deftest explicitly-configured-host-is-still-reached
+  (let [urls (atom [])]
+    (with-redefs [mp/base-url (constantly "https://projector.example")]
+      (binding [mp/*request* (capturing-handler [{:status 200 :body {:records [] :cursor nil}}]
+                                                {:urls urls})]
+        (mp/query-by-collection "com.etzhayyim.test.record")))
+    (is (= ["https://projector.example/xrpc/com.etzhayyim.mstProjector.queryByCollection"]
+           @urls))))
+
+;; ─── Normalization of a value that IS supplied ───────────────────────
+;;
+;; `call*` builds `(str (base-url) "/xrpc/" nsid)`, so a value that does not name a host must
+;; be refused rather than concatenated: "  " used to yield the non-URL "  /xrpc/…" and a
+;; trailing slash a doubled "//". Pure resolver — no environment needed.
+
+(deftest resolve-base-url-normalizes-and-refuses
+  (testing "a chosen host is returned as given"
+    (is (= "https://projector.example" (mp/resolve-base-url "https://projector.example"))))
+
+  (testing "trailing slashes are stripped, so the built path has no doubled //"
+    (is (= "https://projector.example" (mp/resolve-base-url "https://projector.example/")))
+    (is (= "https://projector.example" (mp/resolve-base-url "https://projector.example///"))))
+
+  (testing "surrounding whitespace is trimmed"
+    (is (= "https://projector.example" (mp/resolve-base-url "  https://projector.example  "))))
+
+  (testing "values naming no host are refused, never passed through"
+    (doseq [raw [nil "" "   " "\t\n" "/" "///"]]
+      (let [outcome (attempt #(mp/resolve-base-url raw))]
+        (is (contains? outcome :error)
+            (str "expected a refusal for " (pr-str raw)
+                 ", got " (pr-str (:value outcome))))
+        (when-let [e (:error outcome)]
+          (is (err/sdk-error? e ::err/mst-projector-config-error)
+              (str "refusal for " (pr-str raw) " should be a config error")))))))

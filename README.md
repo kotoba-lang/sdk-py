@@ -55,12 +55,25 @@ Errors surface as `ex-info` with a `:type` keyword; classify with
 
 | Var | Default | Purpose |
 |---|---|---|
-| `ETZHAYYIM_MST_PROJECTOR_URL` | `http://simeon.local:8765` | mst-projector base URL |
+| `ETZHAYYIM_MST_PROJECTOR_URL` | **required** | mst-projector base URL |
+| `ETZHAYYIM_LLM_URL` | **required** | LiteLLM proxy base URL |
+| `ETZHAYYIM_LLM_KEY` | *(none — no header sent)* | bearer token, sent to `ETZHAYYIM_LLM_URL` |
+| `ETZHAYYIM_LLM_MODEL` | `gemma-4-e4b-it` | model name |
+
+The two endpoints are **required and have no default**. They previously fell back to
+`http://levi.local:4000` and `http://simeon.local:8765` — `.local` is the mDNS/Bonjour
+namespace (RFC 6762), so those names are claimable by any host on the same link, and `levi`
+and `simeon` are private murakumo fleet nodes that exist only on the operator's own network.
+Unconfigured, the LLM client would send `Authorization: Bearer $ETZHAYYIM_LLM_KEY` to
+whoever answered. Both now raise a config error (`::errors/llm-config-error`,
+`::errors/mst-projector-config-error`) before any request is made, rather than contacting a
+host nobody chose. Values are trimmed and stripped of trailing slashes; one that names no
+host — blank, whitespace, or only slashes — is treated as absent.
 
 ## Tests (cljc — bb, no shell)
 
 ```bash
-bb 20-actors/etzhayyim-sdk-py/run_tests.clj   # 17 tests / 47 assertions; run from anywhere
+bb 20-actors/etzhayyim-sdk-py/run_tests.clj   # 25 tests / 92 assertions; run from anywhere
 # or, from the actor dir:
 bb test
 ```
