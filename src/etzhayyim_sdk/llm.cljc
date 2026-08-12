@@ -3,14 +3,27 @@
 ;; proxy (DEFAULT-PREFERRED per Rider v3.3 §2(i) / ADR-2606172359). `httpx.AsyncClient` is
 ;; replaced by `babashka.http-client` (no new dependency).
 ;;
-;; Config: ETZHAYYIM_LLM_URL (default http://levi.local:4000), ETZHAYYIM_LLM_KEY,
+;; Config: ETZHAYYIM_LLM_URL (REQUIRED — no default), ETZHAYYIM_LLM_KEY,
 ;;         ETZHAYYIM_LLM_MODEL (default gemma-4-e4b-it).
+;;
+;; WHY THE ENDPOINT HAS NO DEFAULT:
+;;   This is the one module in the SDK that transmits a credential — `auth-headers` attaches
+;;   `Authorization: Bearer $ETZHAYYIM_LLM_KEY` to every POST. It used to fall back to a
+;;   literal "http://levi.local:4000". `.local` is the mDNS/Bonjour namespace (RFC 6762), so
+;;   that name is claimable by any host on the same link, and `levi` is a private murakumo
+;;   fleet node reachable only on the operator's own network. Unconfigured, on any other
+;;   network, `chat`/`translate` handed the bearer token to whoever answered first.
+;;   Substituting some other host we happen to own would not fix that: the key belongs to the
+;;   operator's proxy, so sending it anywhere they did not choose still discloses it. There
+;;   is no public endpoint that serves this proxy, so the SDK cannot know the answer — it
+;;   asks, and fails loudly when unanswered.
 ;;
 ;; Testability: HTTP goes through the dynamic var `*request*` ([url headers body-str] →
 ;; {:status :body}, may throw); the retry sleep goes through `*sleep-fn*` (rebind to a
 ;; no-op in tests to avoid real backoff). Defaults use babashka.http-client + Thread/sleep.
 (ns etzhayyim-sdk.llm
   (:require [clojure.string :as str]
+            [etzhayyim-sdk.config :as cfg]
             [etzhayyim-sdk.errors :as err]
             #?(:clj [cheshire.core :as json])
             #?(:clj [babashka.http-client :as http])))
@@ -19,7 +32,22 @@
 
 (defn- env [k] (not-empty #?(:clj (System/getenv k) :cljs nil)))
 
-(defn llm-url   [] (str/replace (or (env "ETZHAYYIM_LLM_URL") "http://levi.local:4000") #"/+$" ""))
+(defn resolve-llm-url
+  "Normalize *raw* (an ETZHAYYIM_LLM_URL value) into the LiteLLM proxy base URL.
+
+  Throws ::err/llm-config-error when *raw* names no host — nil, blank, or nothing but
+  slashes. There is deliberately no fallback; see the note at the top of this file. Pure, so
+  the refusal is testable without touching the environment."
+  [raw]
+  (or (cfg/normalize-base-url raw)
+      (throw (err/ex ::err/llm-config-error
+                     (str "ETZHAYYIM_LLM_URL is not set. This client sends "
+                          "'Authorization: Bearer $ETZHAYYIM_LLM_KEY' to the configured host, "
+                          "so it must be one you chose — point ETZHAYYIM_LLM_URL at your "
+                          "LiteLLM proxy. It has no default.")
+                     {:env-var "ETZHAYYIM_LLM_URL"}))))
+
+(defn llm-url   [] (resolve-llm-url (env "ETZHAYYIM_LLM_URL")))
 (defn llm-key   [] (or (env "ETZHAYYIM_LLM_KEY") ""))
 (defn llm-model [] (or (env "ETZHAYYIM_LLM_MODEL") "gemma-4-e4b-it"))
 

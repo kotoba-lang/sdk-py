@@ -15,6 +15,8 @@
 ;;   ::mst-projector-error           = MstProjectorError          (→ ::error)
 ;;   ::mst-projector-network-error   = MstProjectorNetworkError   (→ ::mst-projector-error)
 ;;   ::mst-projector-server-error    = MstProjectorServerError    (→ ::mst-projector-error)
+;;   ::mst-projector-config-error    = raised before any request when no endpoint was
+;;                                     configured (→ ::mst-projector-error)
 ;; mst
 ;;   ::mst-error                     = MstError                   (→ ::error)
 ;;   ::mst-network-error             = MstNetworkError            (→ ::mst-error)
@@ -25,12 +27,15 @@
 ;;   ::llm-auth-error                = LlmAuthError               (→ ::llm-error)
 ;;   ::llm-rate-limit-error          = LlmRateLimitError          (→ ::llm-error)
 ;;   ::llm-server-error              = LlmServerError             (→ ::llm-error)
+;;   ::llm-config-error              = raised before any request when no endpoint was
+;;                                     configured (→ ::llm-error)
 ;; mst (stub markers — python raised NotImplementedError, not an SDK error)
 ;;   ::not-implemented               = NotImplementedError analogue (NOT → ::error)
 
 (derive ::mst-projector-error         ::error)
 (derive ::mst-projector-network-error ::mst-projector-error)
 (derive ::mst-projector-server-error  ::mst-projector-error)
+(derive ::mst-projector-config-error  ::mst-projector-error)
 
 (derive ::mst-error         ::error)
 (derive ::mst-network-error ::mst-error)
@@ -41,6 +46,7 @@
 (derive ::llm-auth-error       ::llm-error)
 (derive ::llm-rate-limit-error ::llm-error)
 (derive ::llm-server-error     ::llm-error)
+(derive ::llm-config-error     ::llm-error)
 
 (defn ex
   "Build an SDK `ex-info` of *type* (one of the keywords above) with message *msg* and

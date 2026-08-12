@@ -14,7 +14,8 @@
 
 (def suites
   '[etzhayyim-sdk.test-metrics
-    etzhayyim-sdk.test-mst-projector])
+    etzhayyim-sdk.test-mst-projector
+    etzhayyim-sdk.test-llm])
 
 (apply require suites)
 
