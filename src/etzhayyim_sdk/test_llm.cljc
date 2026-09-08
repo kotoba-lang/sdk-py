@@ -15,7 +15,7 @@
 ;; test_mst_projector.cljc stubs `mp/*request*`.
 (ns etzhayyim-sdk.test-llm
   (:require [clojure.test :refer [deftest is testing]]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [cheshire.core :as json]
             [etzhayyim-sdk.errors :as err]
             [etzhayyim-sdk.llm :as llm]))

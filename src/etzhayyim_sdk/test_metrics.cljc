@@ -2,7 +2,7 @@
 ;; in-process metrics collector + Prometheus export. Per ADR-2605215200 §monitoring.
 (ns etzhayyim-sdk.test-metrics
   (:require [clojure.test :refer [deftest is use-fixtures]]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [etzhayyim-sdk.metrics :as m]))
 
 (use-fixtures :each (fn [t] (m/reset!) (t) (m/reset!)))

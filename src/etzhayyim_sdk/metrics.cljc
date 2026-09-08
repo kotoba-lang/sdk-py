@@ -11,7 +11,7 @@
 ;; `(gauge-set! (gauge n))`, and the `with metrics.timer(n):` context-manager becomes the
 ;; `(with-timer n & body)` macro. Same names/semantics otherwise.
 (ns etzhayyim-sdk.metrics
-  (:require [clojure.string :as str]))
+  (:require [kotoba.lang.text :as str]))
 
 (defonce ^:private state (atom {:counters {} :gauges {} :histograms {}}))
 

@@ -5,7 +5,7 @@
 ;; Per ADR-2605215500 §5 M5 milestone.
 (ns etzhayyim-sdk.test-mst-projector
   (:require [clojure.test :refer [deftest is testing use-fixtures]]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [cheshire.core :as json]
             [etzhayyim-sdk.errors :as err]
             [etzhayyim-sdk.mst-projector :as mp]))
@@ -154,7 +154,7 @@
                                                 {:urls urls})]
         (mp/query-by-collection "com.etzhayyim.test.record")))
     (is (= 1 (count @urls)))
-    (is (clojure.string/starts-with? (first @urls) "http://my-projector.local:9999/"))))
+    (is (str/starts-with? (first @urls) "http://my-projector.local:9999/"))))
 
 ;; ─── Which host gets contacted when nothing was configured ───────────
 ;;
