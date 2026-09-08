@@ -22,7 +22,7 @@
 ;; {:status :body}, may throw); the retry sleep goes through `*sleep-fn*` (rebind to a
 ;; no-op in tests to avoid real backoff). Defaults use babashka.http-client + Thread/sleep.
 (ns etzhayyim-sdk.llm
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             [etzhayyim-sdk.config :as cfg]
             [etzhayyim-sdk.errors :as err]
             #?(:clj [cheshire.core :as json])

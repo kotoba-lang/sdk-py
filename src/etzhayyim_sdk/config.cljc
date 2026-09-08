@@ -9,7 +9,7 @@
 ;; of "  " used to produce the non-URL "  /xrpc/…", and one with a trailing slash produced a
 ;; doubled "//" — neither names a host, so both are treated as absent.
 (ns etzhayyim-sdk.config
-  (:require [clojure.string :as str]))
+  (:require [kotoba.lang.text :as str]))
 
 (defn normalize-base-url
   "Trim *raw* and strip trailing slashes, returning the resulting base URL.

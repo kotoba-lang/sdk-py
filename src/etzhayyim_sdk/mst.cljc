@@ -8,7 +8,7 @@
 ;; uses `babashka.http-client` like mst_projector, no new dependency). Config:
 ;;   ETZHAYYIM_PDS_URL (default http://atproto.etzhayyim.com).
 (ns etzhayyim-sdk.mst
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             [etzhayyim-sdk.errors :as err]))
 
 (def ^:private default-pds-url "http://atproto.etzhayyim.com")
