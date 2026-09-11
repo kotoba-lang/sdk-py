@@ -73,7 +73,7 @@ host — blank, whitespace, or only slashes — is treated as absent.
 ## Tests (cljc — bb, no shell)
 
 ```bash
-bb 20-actors/etzhayyim-sdk-py/run_tests.clj   # 25 tests / 92 assertions; run from anywhere
+bb 20-actors/etzhayyim-sdk-py/run_tests.cljk   # 25 tests / 92 assertions; run from anywhere
 # or, from the actor dir:
 bb test
 ```

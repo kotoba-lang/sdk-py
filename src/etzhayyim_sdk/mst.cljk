@@ -24,7 +24,7 @@
   (err/ex ::err/not-implemented
           (str where ": real PDS binding not yet wired (M3 target). "
                "In tests, redefine this fn with with-redefs. "
-               "See 20-actors/etzhayyim-sdk-py/src/etzhayyim_sdk/mst.cljc.")
+               "See 20-actors/etzhayyim-sdk-py/src/etzhayyim_sdk/mst.cljk.")
           {:where where}))
 
 (defn query
