@@ -8,7 +8,7 @@
 ;; Classpath root = this file's sibling `src/` (ns etzhayyim-sdk.<m> → src/etzhayyim_sdk/<m>.cljc).
 (require '[babashka.classpath :as cp]
          '[babashka.fs :as fs]
-         '[clojure.test :as t])
+         '[kotoba.test :as t])
 
 (cp/add-classpath (str (fs/file (fs/parent (fs/absolutize *file*)) "src")))
 
