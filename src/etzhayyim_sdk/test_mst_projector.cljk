@@ -4,7 +4,7 @@
 ;; bb-native analogue of the python MockTransport handler. No real network calls.
 ;; Per ADR-2605215500 §5 M5 milestone.
 (ns etzhayyim-sdk.test-mst-projector
-  (:require [clojure.test :refer [deftest is testing use-fixtures]]
+  (:require [kotoba.test :refer [deftest is testing use-fixtures]]
             [kotoba.lang.text :as str]
             [cheshire.core :as json]
             [etzhayyim-sdk.errors :as err]
