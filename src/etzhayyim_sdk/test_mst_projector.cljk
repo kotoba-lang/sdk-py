@@ -4,7 +4,7 @@
 ;; bb-native analogue of the python MockTransport handler. No real network calls.
 ;; Per ADR-2605215500 §5 M5 milestone.
 (ns etzhayyim-sdk.test-mst-projector
-  (:require [kotoba.test :refer [deftest is testing use-fixtures]]
+  (:require [kotoba.lang.error :as kerror] [kotoba.test :refer [deftest is testing use-fixtures]]
             [kotoba.lang.text :as str]
             [cheshire.core :as json]
             [etzhayyim-sdk.errors :as err]
@@ -121,7 +121,7 @@
     (try
       (mp/query-by-collection "com.etzhayyim.test.record")
       (is false "expected network error")
-      (catch clojure.lang.ExceptionInfo e
+      (catch kerror/ExceptionInfo e
         (is (err/sdk-error? e ::err/mst-projector-network-error))
         (is (re-find #"network error" (ex-message e)))))))
 
@@ -130,7 +130,7 @@
     (try
       (mp/query-by-collection "com.etzhayyim.test.record")
       (is false "expected server error")
-      (catch clojure.lang.ExceptionInfo e
+      (catch kerror/ExceptionInfo e
         (is (err/sdk-error? e ::err/mst-projector-server-error))
         (is (re-find #"HTTP 500" (ex-message e)))))))
 
@@ -139,7 +139,7 @@
     (try
       (mp/query-by-collection "")
       (is false "expected client error")
-      (catch clojure.lang.ExceptionInfo e
+      (catch kerror/ExceptionInfo e
         ;; an SDK error, but NOT a server (5xx) error
         (is (err/sdk-error? e ::err/mst-projector-error))
         (is (not (err/sdk-error? e ::err/mst-projector-server-error)))))))
