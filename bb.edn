@@ -4,6 +4,10 @@
 ;; run from this dir. This file is scoped to this directory and does not affect the repo-root
 ;; bb.edn. Tests: `kbb -M:test` (or `kbb run_tests.cljk`).
 {:paths ["src"]
+ :deps {
+        ;; kotoba.lang.error replaced clojure.lang.ExceptionInfo here (2026-09-25).
+        ;; An explicit floor: tools.deps takes the NEWEST sha it is shown.
+        io.github.kotoba-lang/error {:git/sha "838dec56c9a5b74f9eec825a2fb28bda157f8cd3"}}
  :tasks
  {test {:doc "Run the cljc test suites under bb"
         :task (load-file "run_tests.cljk")}}}
