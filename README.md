@@ -6,7 +6,7 @@ Per ADR-2605172000 (kotoba substrate), ADR-2605214000 (no commercial K8s), ADR-2
 
 ## Migration status (py → cljc, httpx → babashka.http-client)
 
-Per the repo-wide clj/bb rule (root CLAUDE.md §"Operational code = clj/bb over the kotoba
+Per the repo-wide clj/bb rule (root AGENTS.md §"Operational code = clj/bb over the kotoba
 Datom log"), the HTTP-bearing modules have been **ported off `httpx` to `babashka.http-client`**
 (no new dependency — bb-native). The python and cljc surfaces **coexist** during the migration:
 
