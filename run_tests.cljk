@@ -1,6 +1,6 @@
 #!/usr/bin/env kbb
 ;; etzhayyim-sdk — bb-native test runner (Clojure / babashka; no shell). ADR-2606072802 /
-;; root CLAUDE.md §"Operational code = clj/bb". Supersedes any run_tests.sh (new actors ship
+;; root AGENTS.md §"Operational code = clj/bb". Supersedes any run_tests.sh (new actors ship
 ;; run_tests.cljk). Runs the cljc suites that exercise the httpx→babashka.http-client port.
 ;;
 ;;   kbb 20-actors/etzhayyim-sdk-py/run_tests.cljk      ; run from anywhere
